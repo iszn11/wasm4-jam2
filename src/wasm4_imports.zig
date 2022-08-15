@@ -1,0 +1,12 @@
+pub extern fn blit(sprite: [*]const u8, x: u32, y: u32, width: u32, height: u32, flags: u32) void;
+pub extern fn blitSub(sprite: [*]const u8, x: u32, y: u32, width: u32, height: u32, src_x: u32, src_y: u32, stride: u32, flags: u32) void;
+pub extern fn line(x1: u32, y1: u32, x2: u32, y2: u32) void;
+pub extern fn hline(x: u32, y: u32, len: u32) void;
+pub extern fn vline(x: u32, y: u32, len: u32) void;
+pub extern fn oval(x: u32, y: u32, width: u32, height: u32) void;
+pub extern fn rect(x: u32, y: u32, width: u32, height: u32) void;
+pub extern fn textUtf8(str: [*]const u8, len: usize, x: u32, y: u32) void;
+pub extern fn tone(frequency: u32, duration: u32, volume: u32, flags: u32) void;
+pub extern fn diskr(dest: [*]u8, size: u32) u32;
+pub extern fn diskw(src: [*]const u8, size: u32) u32;
+pub extern fn traceUtf8(str: [*]const u8, len: usize) void;
