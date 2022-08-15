@@ -1,31 +1,25 @@
 const std = @import("std");
 const w4 = @import("wasm4.zig");
 
-const smiley = [8]u8{
-    0b11000011,
-    0b10000001,
-    0b00100100,
-    0b00100100,
-    0b00000000,
-    0b00100100,
-    0b10011001,
-    0b11000011,
-};
+const camera = @import("camera.zig");
+const level = @import("level.zig");
+const player = @import("player.zig");
 
 export fn start() void {
-
+    w4.palette[0] = w4.Color.init(8, 8, 16);
+    w4.palette[1] = w4.Color.init(240, 255, 255);
+    w4.palette[2] = w4.Color.init(255, 243, 168);
+    w4.palette[3] = w4.Color.init(100, 100, 100);
 }
 
 export fn update() void {
-    w4.draw_colors.color1 = 2;
-    w4.draw_colors.color2 = 0;
-    w4.textUnformatted("Hello from Zig!", 10, 10);
+    player.update();
+    camera.update();
 
-    if (w4.gamepads[0].x) {
-        w4.draw_colors.color1 = 1;
-        w4.draw_colors.color2 = 2;
-    }
+    w4.draw_colors.color1 = 1;
+    w4.draw_colors.color2 = 1;
+    w4.rect(0, 0, w4.screen_size, w4.screen_size);
 
-    w4.blit(&smiley, 76, 76, 8, 8, .{});
-    w4.textUnformatted("Press X to blink", 16, 90);
+    level.draw();
+    player.draw();
 }

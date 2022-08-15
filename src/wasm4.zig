@@ -1,6 +1,8 @@
 const std = @import("std");
 const imports = @import("wasm4_imports.zig");
 
+const Vec2 = @import("Vec2.zig");
+
 pub const screen_size = 160;
 
 // --- MEMORY MAP --------------------------------------------------------------
@@ -10,6 +12,8 @@ pub const Color = packed struct {
     g: u8,
     r: u8,
     _pad: u8 = 0,
+
+    pub fn init(r: u8, g: u8, b: u8) Color { return Color{ .r = r, .g = g, .b = b }; }
 };
 
 pub const DrawColors = packed struct {
@@ -78,45 +82,46 @@ var text_buf: [1024]u8 = undefined;
 
 /// Copies pixels to the framebuffer. Affected by the `draw_colors` register.
 /// `sprite` is in 1 bpp or 2 bpp format, has size `width`×`height` and is
-/// copied to framebuffer with (`x`, `y`) begin at its upper-left corner.
-pub inline fn blit(sprite: [*]const u8, x: u32, y: u32, width: u32, height: u32, flags: BlitFlags) void {
-    imports.blit(sprite, x, y, width, height, @bitCast(u32, flags));
+/// copied to framebuffer with (`pos.x`, `pos.y`) being at its upper-left
+/// corner.
+pub inline fn blit(sprite: [*]const u8, pos: Vec2, width: u32, height: u32, flags: BlitFlags) void {
+    imports.blit(sprite, pos.x, pos.y, width, height, @bitCast(u32, flags));
 }
 
 /// Copies a subregion within a larger sprite atlas to the framebuffer.
-pub inline fn blitSub(sprite: [*]const u8, x: u32, y: u32, width: u32, height: u32, src_x: u32, src_y: u32, stride: u32, flags: BlitFlags) void {
-    imports.blitSub(sprite, x, y, width, height, src_x, src_y, stride, @bitCast(u32, flags));
+pub inline fn blitSub(sprite: [*]const u8, pos: Vec2, width: u32, height: u32, src_pos: Vec2, stride: u32, flags: BlitFlags) void {
+    imports.blitSub(sprite, pos.x, pos.y, width, height, src_pos.x, src_pos.y, stride, @bitCast(u32, flags));
 }
 
 /// Draws a line between two points.
 /// `draw_colors` color 1 is used as the line color.
-pub inline fn line(x1: u32, y1: u32, x2: u32, y2: u32) void {
+pub inline fn line(x1: i32, y1: i32, x2: i32, y2: i32) void {
     imports.line(x1, y1, x2, y2);
 }
 
 /// Draws a horizontal line between (`x`, `y`) and (`x` + `len` - 1, `y`).
 /// `draw_colors` color 1 is used as the line color.
-pub inline fn hline(x: u32, y: u32, len: u32) void {
+pub inline fn hline(x: i32, y: i32, len: u32) void {
     imports.hline(x, y, len);
 }
 
 /// Draws a vertical line between (``x`, `y`) and (`x`, `y` + `len` - 1).
 /// `draw_colors` color 1 is used as the line color.
-pub inline fn vline(x: u32, y: u32, len: u32) void {
+pub inline fn vline(x: i32, y: i32, len: u32) void {
     imports.vline(x, y, len);
 }
 
 /// Draws an oval (or circle).
 /// `draw_colors` color 1 is used as the fill color.
 /// `draw_colors` color 2 is used as the outline color.
-pub inline fn oval(x: u32, y: u32, width: u32, height: u32) void {
+pub inline fn oval(x: i32, y: i32, width: u32, height: u32) void {
     imports.oval(x, y, width, height);
 }
 
 /// Draws a rectangle.
 /// `draw_colors` color 1 is used as the fill color.
 /// `draw_colors` color 2 is used as the outline color.
-pub inline fn rect(x: u32, y: u32, width: u32, height: u32) void {
+pub inline fn rect(x: i32, y: i32, width: u32, height: u32) void {
     imports.rect(x, y, width, height);
 }
 
@@ -125,7 +130,7 @@ pub inline fn rect(x: u32, y: u32, width: u32, height: u32) void {
 /// The font is 8x8 pixels per character.
 /// `draw_colors` color 1 is used as the text color.
 /// `draw_colors` color 2 is used as the background color.
-pub inline fn textUnformatted(str: []const u8, x: u32, y: u32) void {
+pub inline fn textUnformatted(str: []const u8, x: i32, y: i32) void {
     imports.textUtf8(str.ptr, str.len, x, y);
 }
 
@@ -136,8 +141,8 @@ pub inline fn textUnformatted(str: []const u8, x: u32, y: u32) void {
 /// Output will be truncated if the formatted string would be too long.
 /// `draw_colors` color 1 is used as the text color.
 /// `draw_colors` color 2 is used as the background color.
-pub fn text(comptime fmt: []const u8, x: u32, y: u32, args: anytype) void {
-    const str = std.fmt.bufPrint(text_buf, fmt, args) catch |err| switch (err) {
+pub fn text(comptime fmt: []const u8, x: i32, y: i32, args: anytype) void {
+    const str = std.fmt.bufPrint(&text_buf, fmt, args) catch |err| switch (err) {
         error.NoSpaceLeft => {
             imports.textUtf8(&text_buf, text_buf.len, x, y);
             traceUnformatted("WARNING: Rendered text was truncated because it was too long");
@@ -222,7 +227,7 @@ pub inline fn traceUnformatted(str: []const u8) void {
 /// Uses a temporary buffer for allocation which can hold at most 1024 bytes.
 /// Output will be truncated if the formatted string would be too long.
 pub fn trace(comptime fmt: []const u8, args: anytype) void {
-    const str = std.fmt.bufPrint(trace_buf, fmt, args) catch |err| switch (err) {
+    const str = std.fmt.bufPrint(&trace_buf, fmt, args) catch |err| switch (err) {
         error.NoSpaceLeft => {
             imports.traceUtf8(&trace_buf, trace_buf.len);
             traceUnformatted("WARNING: Trace message was truncated because it was too long");
