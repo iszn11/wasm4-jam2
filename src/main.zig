@@ -9,7 +9,7 @@ export fn start() void {
     w4.palette[0] = w4.Color.init(8, 8, 16);
     w4.palette[1] = w4.Color.init(240, 255, 255);
     w4.palette[2] = w4.Color.init(255, 243, 168);
-    w4.palette[3] = w4.Color.init(100, 100, 100);
+    w4.palette[3] = w4.Color.init(48, 48, 96);
 }
 
 export fn update() void {

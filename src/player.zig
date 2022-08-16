@@ -6,15 +6,16 @@ const level = @import("level.zig");
 
 const Vec2 = @import("Vec2.zig");
 
-const sprite = [8]u8{
-    0b11000011,
-    0b10000001,
-    0b00100100,
-    0b00100100,
-    0b00000000,
-    0b00100100,
-    0b10011001,
-    0b11000011,
+const sprite = [_]u8{
+    0b00_00_01_01, 0b01_01_00_00,
+    0b00_01_01_01, 0b01_01_01_00,
+    0b10_01_01_01, 0b10_10_10_00,
+    0b10_01_01_01, 0b10_10_10_00,
+    0b10_01_01_01, 0b01_01_01_00,
+    0b10_01_01_01, 0b01_01_01_00,
+    0b00_01_01_01, 0b01_01_01_00,
+    0b00_00_01_01, 0b01_01_00_00,
+    0b00_00_01_00, 0b00_01_00_00,
 };
 
 const max_horizontal_speed_sp = 0x0120;
@@ -42,18 +43,19 @@ const State = enum {
     air,
 };
 
-const sprite_offset_sp = Vec2.init(-0x0400, -0x0800);
+const sprite_offset_sp = Vec2.init(-0x0400, -0x0900);
 
-const hitbox_horizontal_extent_sp = 0x0400;
-const hitbox_height_sp = 0x0800;
+const hitbox_horizontal_extent_sp = 0x0300;
+const hitbox_height_sp = 0x0900;
 
-pub var position_sp = Vec2.init(0x5000, 0x1800);
+pub var position_sp = Vec2.init(0xF000, 0x1000);
 pub var speed_sp = Vec2.inits(0);
 pub var state: State = .on_ground;
 pub var platform_hspeed_sp: i32 = 0;
 
 pub var sprite_hflip = false;
 pub var last_jump = false;
+pub var infinite_jump = true;
 
 fn currentJumpForcesp() i32 {
     const speed_abs_x_sp = std.math.absCast(speed_sp.x);
@@ -73,15 +75,13 @@ fn sgn(x: i32) i32 {
 pub fn update() void {
     const left = w4.gamepads[0].left;
     const right = w4.gamepads[0].right;
-    //const up = w4.gamepads[0].up;
-    //const down = w4.gamepads[0].down;
     const jump = w4.gamepads[0].z and !last_jump;
 
     const dx = @as(i32, @boolToInt(right)) - @as(i32, @boolToInt(left));
 
     // state transitions
 
-    if (state == .on_ground and jump) {
+    if ((state == .on_ground or infinite_jump) and jump) {
         speed_sp.y = -currentJumpForcesp();
         state = .air;
     }
@@ -126,26 +126,22 @@ pub fn update() void {
 
             const y_tile = @divFloor(position_sp.y, level.tile_size_sp);
 
-            const x_tile_left = std.math.max(@divFloor(position_sp.x - hitbox_horizontal_extent_sp, level.tile_size_sp), 0);
-            const x_tile_right = std.math.min(@divFloor(position_sp.x + hitbox_horizontal_extent_sp - 1, level.tile_size_sp), level.width - 1);
+            const x_tile_left = @divFloor(position_sp.x - hitbox_horizontal_extent_sp, level.tile_size_sp);
+            const x_tile_right = @divFloor(position_sp.x + hitbox_horizontal_extent_sp - 1, level.tile_size_sp);
 
-            // NOTE We shouldn't be on ground in the first place when y_tile >= level.height
-            // Check anyway for safety
-            if (y_tile < level.height) {
-                var still_on_ground = false;
-                var x = x_tile_left;
-                while (x <= x_tile_right) : (x += 1) {
-                    const tile_id = level.at(x, y_tile);
-                    if (tile_id == 0) {
-                        continue;
-                    }
-
-                    still_on_ground = true;
+            var still_on_ground = false;
+            var x = x_tile_left;
+            while (x <= x_tile_right) : (x += 1) {
+                const tile_id = level.at(x, y_tile);
+                if (tile_id == 0) {
+                    continue;
                 }
 
-                if (!still_on_ground) {
-                    state = .air;
-                }
+                still_on_ground = true;
+            }
+
+            if (!still_on_ground) {
+                state = .air;
             }
         },
 
@@ -188,16 +184,11 @@ pub fn update() void {
 
                 // crossing tiles, possibility of collision
                 if (y_tile_next > y_tile) {
-                    const x_tile_left = std.math.max(@divFloor(position_sp.x - hitbox_horizontal_extent_sp, level.tile_size_sp), 0);
-                    const x_tile_right = std.math.min(@divFloor(position_sp.x + hitbox_horizontal_extent_sp - 1, level.tile_size_sp), level.width - 1);
+                    const x_tile_left = @divFloor(position_sp.x - hitbox_horizontal_extent_sp, level.tile_size_sp);
+                    const x_tile_right = @divFloor(position_sp.x + hitbox_horizontal_extent_sp - 1, level.tile_size_sp);
 
                     var y = y_tile + 1;
                     while (y <= y_tile_next) : (y += 1) {
-                        if (y >= level.height) {
-                            // TODO Die?
-                            break;
-                        }
-
                         var x = x_tile_left;
                         while (x <= x_tile_right) : (x += 1) {
                             const tile_id = level.at(x, y);
@@ -217,8 +208,8 @@ pub fn update() void {
 
                 // crossing tiles, possibility of collision
                 if (y_tile_next < y_tile) {
-                    const x_tile_left = std.math.max(@divFloor(position_sp.x - hitbox_horizontal_extent_sp, level.tile_size_sp), 0);
-                    const x_tile_right = std.math.min(@divFloor(position_sp.x + hitbox_horizontal_extent_sp - 1, level.tile_size_sp), level.width - 1);
+                    const x_tile_left = @divFloor(position_sp.x - hitbox_horizontal_extent_sp, level.tile_size_sp);
+                    const x_tile_right = @divFloor(position_sp.x + hitbox_horizontal_extent_sp - 1, level.tile_size_sp);
 
                     var y = y_tile - 1;
                     while (y >= y_tile_next) : (y -= 1) {
@@ -259,24 +250,15 @@ fn moveAndConstrainHorizontally() void {
     const sx = if (horizontal_movement_sp > 0) @as(i32, 1) else @as(i32, -1);
     const ox = if (horizontal_movement_sp > 0) @as(i32, -1) else @as(i32, 0);
     const dx = if (horizontal_movement_sp > 0) @as(i32, 0) else @as(i32, 1);
-    const x_bound_tl = if (horizontal_movement_sp > 0) @as(i32, level.width) else @as(i32, -1);
-    const x_bound_sp = if (horizontal_movement_sp > 0) @as(i32, level.width * level.tile_size_sp) else @as(i32, 0);
 
     const x_tile = @divFloor(position_sp.x + sx * hitbox_horizontal_extent_sp + ox, level.tile_size_sp);
     const x_tile_next = @divFloor(position_sp.x + sx * hitbox_horizontal_extent_sp + horizontal_movement_sp + ox, level.tile_size_sp);
 
-    const y_tile_top = std.math.max(@divFloor(position_sp.y - hitbox_height_sp, level.tile_size_sp), 0);
-    const y_tile_bottom = std.math.min(@divFloor(position_sp.y - 1, level.tile_size_sp), level.width - 1);
+    const y_tile_top = @divFloor(position_sp.y - hitbox_height_sp, level.tile_size_sp);
+    const y_tile_bottom = @divFloor(position_sp.y - 1, level.tile_size_sp);
 
     var x = x_tile + sx;
     while (x != x_tile_next + sx) : (x += sx) {
-        if (x == x_bound_tl) {
-            speed_sp.x = sx * std.math.min(sx * speed_sp.x, 0);
-            horizontal_movement_sp = 0;
-            position_sp.x = x_bound_sp - sx * hitbox_horizontal_extent_sp;
-            break;
-        }
-
         var collided = false;
 
         var y = y_tile_top;
@@ -304,10 +286,11 @@ pub fn draw() void {
     const sprite_sp = position_sp.add(sprite_offset_sp);
     const sprite_px = sprite_sp.adds(128).div(256);
 
-    //const screen_px = sprite_px.add(camera.getOffsetPX());
-    const screen_px = sprite_px;
+    const screen_px = sprite_px.add(camera.getOffsetPX());
 
-    w4.draw_colors.color1 = 2;
-    w4.draw_colors.color2 = 0;
-    w4.blit(&sprite, screen_px, 8, 8, .{});
+    w4.draw_colors.color1 = 0;
+    w4.draw_colors.color2 = 2;
+    w4.draw_colors.color3 = 4;
+    w4.draw_colors.color4 = 0;
+    w4.blit(&sprite, screen_px, 8, 9, .{ .@"2bpp" = true, .flip_x = sprite_hflip });
 }

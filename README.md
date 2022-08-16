@@ -4,14 +4,8 @@ A game written in Zig for the [WASM-4](https://wasm4.org) fantasy console.
 
 ## Building
 
-Build the cart by running:
+Build and run the cart:
 
 ```shell
-zig build -Drelease-small
-```
-
-Then run it with:
-
-```shell
-w4 run zig-out/lib/cart.wasm
+zig build -Drelease-small && w4 run --no-open --no-qr zig-out/lib/cart.wasm
 ```
