@@ -179,8 +179,16 @@ pub const Duration = packed struct {
     release: u8 = 0,
     decay: u8 = 0,
     attack: u8 = 0,
-    _pad: u16 = 0,
 };
+
+pub fn adsr(attack: u8, decay: u8, sustain: u8, release: u8) Duration {
+    return .{
+        .attack = attack,
+        .decay = decay,
+        .sustain = sustain,
+        .release = release,
+    };
+}
 
 pub const Volume = packed struct {
     sustain: u8,
@@ -196,7 +204,11 @@ pub const ToneFlags = packed struct {
 
 /// Plays a sound tone.
 pub inline fn tone(frequency: Frequency, duration: Duration, volume: Volume, flags: ToneFlags) void {
-    imports.tone(@bitCast(u32, frequency), @bitCast(u32, duration), @bitCast(u32, volume), @bitCast(u32, flags));
+    const frequency_u32 = @bitCast(u32, frequency);
+    const duration_u32 = @bitCast(u32, duration);
+    const volume_u32 = @bitCast(u32, volume);
+    const flags_u32 = @bitCast(u32, flags);
+    imports.tone(frequency_u32, duration_u32, volume_u32, flags_u32);
 }
 
 // --- STORAGE -----------------------------------------------------------------

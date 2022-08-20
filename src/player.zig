@@ -4,6 +4,7 @@ const w4 = @import("wasm4.zig");
 const bullets = @import("bullets.zig");
 const camera = @import("camera.zig");
 const level = @import("level.zig");
+const sound = @import("sound.zig");
 
 const Vec2 = @import("Vec2.zig");
 
@@ -91,6 +92,7 @@ pub fn update() void {
     if ((state == .on_ground or infinite_jump) and jump) {
         speed_sp.y = -currentJumpForcesp();
         state = .air;
+        sound.play(.jump);
     }
 
     switch (state) {
@@ -256,6 +258,7 @@ pub fn update() void {
         }
 
         bullets.spawn(position_sp.add(bullet_spawn_offset), vel);
+        sound.play(.shoot);
     }
 
     last_jump = w4.gamepads[0].z;

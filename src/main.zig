@@ -4,6 +4,7 @@ const w4 = @import("wasm4.zig");
 const bullets = @import("bullets.zig");
 const camera = @import("camera.zig");
 const level = @import("level.zig");
+const music = @import("music.zig");
 const player = @import("player.zig");
 
 const Vec2 = @import("Vec2.zig");
@@ -13,12 +14,22 @@ export fn start() void {
     w4.palette[1] = w4.Color.init(240, 255, 255); // Color 2 (white)
     w4.palette[2] = w4.Color.init(255, 243, 168); // Color 3 (yellow)
     w4.palette[3] = w4.Color.init(48, 48, 96);    // Color 4 (dark blue)
+
+    music.play(&music.overworld_music);
 }
 
 export fn update() void {
     player.update();
     bullets.update();
     camera.update();
+
+    if (w4.mouse.left) {
+        music.play(&music.overworld_music);
+    } else if (w4.mouse.right) {
+        music.play(&music.boss_music);
+    }
+
+    music.update();
 
     w4.draw_colors.color1 = 1;
     w4.draw_colors.color2 = 1;
