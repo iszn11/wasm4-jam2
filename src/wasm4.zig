@@ -121,8 +121,8 @@ pub inline fn oval(x: i32, y: i32, width: u32, height: u32) void {
 /// Draws a rectangle.
 /// `draw_colors` color 1 is used as the fill color.
 /// `draw_colors` color 2 is used as the outline color.
-pub inline fn rect(x: i32, y: i32, width: u32, height: u32) void {
-    imports.rect(x, y, width, height);
+pub inline fn rect(pos: Vec2, width: u32, height: u32) void {
+    imports.rect(pos.x, pos.y, width, height);
 }
 
 /// Draws text using the built-in system font.

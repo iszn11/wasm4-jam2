@@ -1,6 +1,7 @@
 const std = @import("std");
 const w4 = @import("wasm4.zig");
 
+const bullets = @import("bullets.zig");
 const camera = @import("camera.zig");
 const level = @import("level.zig");
 
@@ -47,6 +48,8 @@ const sprite_offset_sp = Vec2.init(-0x0400, -0x0900);
 
 const hitbox_horizontal_extent_sp = 0x0300;
 const hitbox_height_sp = 0x0900;
+const bullet_speed_sp = 0x0280;
+const bullet_spawn_offset = Vec2.init(0x0000, -0x0480);
 
 pub var position_sp = Vec2.init(0xF000, 0x1000);
 pub var speed_sp = Vec2.inits(0);
@@ -55,6 +58,7 @@ pub var platform_hspeed_sp: i32 = 0;
 
 pub var sprite_hflip = false;
 pub var last_jump = false;
+pub var last_shoot = false;
 pub var infinite_jump = true;
 
 fn currentJumpForcesp() i32 {
@@ -75,7 +79,10 @@ fn sgn(x: i32) i32 {
 pub fn update() void {
     const left = w4.gamepads[0].left;
     const right = w4.gamepads[0].right;
+    const up = w4.gamepads[0].up;
+    const down = w4.gamepads[0].down;
     const jump = w4.gamepads[0].z and !last_jump;
+    const shoot = w4.gamepads[0].x and !last_shoot;
 
     const dx = @as(i32, @boolToInt(right)) - @as(i32, @boolToInt(left));
 
@@ -237,7 +244,22 @@ pub fn update() void {
         },
     }
 
+    if (shoot) {
+        var vel = Vec2.zero;
+        if (left) vel.x -= bullet_speed_sp;
+        if (right) vel.x += bullet_speed_sp;
+        if (up) vel.y -= bullet_speed_sp;
+        if (down) vel.y += bullet_speed_sp;
+
+        if (vel.equals(Vec2.zero)) {
+            vel.x = if (sprite_hflip) -bullet_speed_sp else bullet_speed_sp;
+        }
+
+        bullets.spawn(position_sp.add(bullet_spawn_offset), vel);
+    }
+
     last_jump = w4.gamepads[0].z;
+    last_shoot = w4.gamepads[0].x;
 }
 
 fn moveAndConstrainHorizontally() void {

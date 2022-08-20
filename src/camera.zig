@@ -12,7 +12,7 @@ pub const extent_sp: i32 = extent_tl * 256;
 
 pub const ease: f32 = 0.2;
 
-pub var center_sp = Vec2.inits(80 * 256);
+pub var center_sp = Vec2.init(240, 80).mul(256);
 
 pub fn getOffsetPX() Vec2 {
     return getCenterPX().nadds(80);
