@@ -4,6 +4,8 @@ const w4 = @import("wasm4.zig");
 const bullets = @import("bullets.zig");
 const camera = @import("camera.zig");
 const level = @import("level.zig");
+const main = @import("main.zig");
+const music = @import("music.zig");
 const sound = @import("sound.zig");
 
 const Vec2 = @import("Vec2.zig");
@@ -264,6 +266,33 @@ pub fn update() void {
 
         bullets.spawn(position_sp.add(bullet_spawn_offset), vel, .player);
         sound.play(.shoot);
+    }
+
+    var bullet_i: usize = 0;
+    while (hp != 0 and bullet_i < bullets.bullet_count) {
+        if (bullets.bullet_type[bullet_i] != .turret) {
+            bullet_i += 1;
+            continue;
+        }
+
+        const bullet_pos_sp = bullets.bullet_pos_sp[bullet_i];
+        if (
+            bullet_pos_sp.x >= position_sp.x - hitbox_horizontal_extent_sp
+            and bullet_pos_sp.y >= position_sp.y - hitbox_height_sp
+            and bullet_pos_sp.x <= position_sp.x + hitbox_horizontal_extent_sp
+            and bullet_pos_sp.y <= position_sp.y
+        ) {
+            bullets.swapRemove(bullet_i);
+            hp -= 1;
+            sound.play(if (hp == 0) .explode else .hit);
+        } else {
+            bullet_i += 1;
+        }
+    }
+
+    if (hp == 0) {
+        main.state = .dead;
+        music.play(null);
     }
 
     last_jump = w4.gamepads[0].z;

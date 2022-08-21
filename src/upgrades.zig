@@ -3,6 +3,7 @@ const w4 = @import("wasm4.zig");
 
 const camera = @import("camera.zig");
 const level = @import("level.zig");
+const main = @import("main.zig");
 const player = @import("player.zig");
 
 const Vec2 = @import("Vec2.zig");
@@ -11,12 +12,14 @@ const start_chunk_pos = Vec2.init(1, 0);
 const jump_chunk_pos = Vec2.init(0, 2);
 const hp_chunk_pos = Vec2.init(3, 3);
 const weapon_chunk_pos = Vec2.init(4, 2);
+const win_chunk_pos = Vec2.init(4, 0);
 
 const extent_sp = Vec2.inits(4 * 256);
 
 const jump_pos_sp = jump_chunk_pos.scale(level.chunk_size_sp).add(Vec2.init(80, 120).mul(256));
 const hp_pos_sp = hp_chunk_pos.scale(level.chunk_size_sp).add(Vec2.init(80, 56).mul(256));
 const weapons_pos_sp = weapon_chunk_pos.scale(level.chunk_size_sp).add(Vec2.init(28, 20).mul(256));
+const win_pos_sp = win_chunk_pos.scale(level.chunk_size_sp).add(Vec2.init(80, 120).mul(256));
 
 pub var hp_upgrade_get = false;
 
@@ -56,11 +59,26 @@ pub fn update() void {
     }
 
     if (!hp_upgrade_get and checkCollision(hp_pos_sp)) {
-        player.max_hp += 4;
+        player.max_hp += 2;
         player.hp = player.max_hp;
         hp_upgrade_get = true;
     }
 
+    if (checkCollision(win_pos_sp)) {
+        main.state = .win;
+    }
+
+}
+
+fn drawSprite(pos_sp: Vec2) void {
+    const camera_offset_px = camera.getOffsetPX();
+
+    w4.draw_colors.color1 = 0;
+    w4.draw_colors.color2 = 2;
+    w4.draw_colors.color3 = 3;
+
+    const pos_px = pos_sp.sub(extent_sp).div(256);
+    w4.blit(&sprite, pos_px.add(camera_offset_px), 8, 8, .{.@"2bpp" = true});
 }
 
 pub fn draw() void {
@@ -84,15 +102,9 @@ pub fn draw() void {
             w4.textUnformatted("Infinite jump", 24 + d.x, 32 + d.y);
             w4.textUnformatted("get!", 24 + d.x, 40 + d.y);
             w4.textUnformatted("Press Z in the", 24 + d.x, 56 + d.y);
-            w4.textUnformatted("air to jump", 24 + d.x, 64 + d.y);
-            w4.textUnformatted("repeatedly", 24 + d.x, 72 + d.y);
+            w4.textUnformatted("air repeatedly", 24 + d.x, 64 + d.y);
         } else {
-            w4.draw_colors.color1 = 0;
-            w4.draw_colors.color2 = 2;
-            w4.draw_colors.color3 = 3;
-
-            const pos_px = jump_pos_sp.sub(extent_sp).div(256);
-            w4.blit(&sprite, pos_px.add(camera_offset_px), 8, 8, .{.@"2bpp" = true});
+            drawSprite(jump_pos_sp);
         }
     } else if (player_chunk_pos.equals(weapon_chunk_pos)) {
         if (player.has_weapon) {
@@ -104,12 +116,7 @@ pub fn draw() void {
             w4.textUnformatted("Aim with", 8 + d.x, 128 + d.y);
             w4.textUnformatted("arrows", 8 + d.x, 136 + d.y);
         } else {
-            w4.draw_colors.color1 = 0;
-            w4.draw_colors.color2 = 2;
-            w4.draw_colors.color3 = 3;
-
-            const pos_px = weapons_pos_sp.sub(extent_sp).div(256);
-            w4.blit(&sprite, pos_px.add(camera_offset_px), 8, 8, .{.@"2bpp" = true});
+            drawSprite(weapons_pos_sp);
         }
     } else if (player_chunk_pos.equals(hp_chunk_pos)) {
         if (hp_upgrade_get) {
@@ -119,12 +126,9 @@ pub fn draw() void {
             w4.textUnformatted("HP upgrade get!", 8 + d.x, 32 + d.y);
             w4.textUnformatted("HP restored", 8 + d.x, 40 + d.y);
         } else {
-            w4.draw_colors.color1 = 0;
-            w4.draw_colors.color2 = 2;
-            w4.draw_colors.color3 = 3;
-
-            const pos_px = hp_pos_sp.sub(extent_sp).div(256);
-            w4.blit(&sprite, pos_px.add(camera_offset_px), 8, 8, .{.@"2bpp" = true});
+            drawSprite(hp_pos_sp);
         }
+    } else if (player_chunk_pos.equals(win_chunk_pos)) {
+        drawSprite(win_pos_sp);
     }
 }

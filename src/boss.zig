@@ -32,7 +32,7 @@ const timer_period = 400;
 const chunk_pos = Vec2.init(1, 3);
 const chunk_corner_px = chunk_pos.scale(level.chunk_size_px);
 const origin_sp = chunk_corner_px.add(Vec2.init(80, 84)).mul(256);
-const start_hp = 20;
+const start_hp = 30;
 const extent_sp = Vec2.init(8, 8).mul(256);
 
 pub var state: State = .before_battle;

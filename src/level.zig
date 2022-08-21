@@ -309,13 +309,13 @@ const chunks = [_]*const [chunk_length]u8{
     "XX                  " ++
     "XX                XX" ++
     "XX                XX" ++
+    "XX            XX  XX" ++
     "XX                XX" ++
     "XX                XX" ++
+    "XX       XX       XX" ++
     "XX                XX" ++
     "XX                XX" ++
-    "XX                XX" ++
-    "XX                XX" ++
-    "XX                XX" ++
+    "XX  XX            XX" ++
     "XX                XX" ++
     "XX                XX" ++
     "XX       XX       XX" ++
@@ -382,19 +382,19 @@ const chunks = [_]*const [chunk_length]u8{
     "XXXXXXXXXXXXXXXXXXXX"
     ,
     "XX                XX" ++
-    "XX  XX            XX" ++
-    "XX                XX" ++
-    "XX                XX" ++
-    "XX       XX       XX" ++
-    "XX                XX" ++
-    "XX                XX" ++
     "XX            XX  XX" ++
     "XX                XX" ++
     "XX                XX" ++
     "XX       XX       XX" ++
     "XX                XX" ++
     "XX                XX" ++
-    "    XX              " ++
+    "XX  XX            XX" ++
+    "XX                XX" ++
+    "XX                XX" ++
+    "XX       XX       XX" ++
+    "XX                XX" ++
+    "XX                XX" ++
+    "              XX    " ++
     "                    " ++
     "                    " ++
     "                    " ++
@@ -500,16 +500,36 @@ const chunks = [_]*const [chunk_length]u8{
     "              XX  XX" ++
     "XXXXXXXXXXXXXXXX  XX" ++
     "XXXXXXXXXXXXXXXX  XX"
+    ,
+    "XXXXXXXXXXXXXXXXXXXX" ++
+    "XXXXXXXXXXXXXXXXXXXX" ++
+    "XX                XX" ++
+    "XX                XX" ++
+    "XX                XX" ++
+    "XX                XX" ++
+    "XX                XX" ++
+    "XX                XX" ++
+    "XX                XX" ++
+    "XX                XX" ++
+    "XX                XX" ++
+    "XX                XX" ++
+    "XX                XX" ++
+    "                  XX" ++
+    "                  XX" ++
+    "                  XX" ++
+    "                  XX" ++
+    "XXXXXXXXXXXXXXXXXXXX" ++
+    "XXXXXXXXXXXXXXXXXXXX"
 };
 
 const map_width = 5;
 const map_height = 5;
 const map = [_]u8{
-    0,  1,  2,  3, 255,
-    0,  4,  5,  0,   0,
-    6,  7,  8,  9,  10,
-    0, 11, 12, 13,  14,
-    0, 15, 16, 17,  18,
+    0,  1,  2,  3, 22,
+    0,  4,  5,  0,  0,
+    6,  7,  8,  9, 10,
+    0, 11, 12, 13, 14,
+    0, 15, 16, 17, 18,
 };
 
 pub fn getChunkID(chunk_pos: Vec2) u8 {
@@ -541,7 +561,7 @@ pub fn at(x: i32, y: i32) u8 {
     }
 
     const chunk_id = getChunkID(chunk_pos);
-    if (chunk_id == 0 or chunk_id == 255) {
+    if (chunk_id == 0) {
         return 1;
     }
 
