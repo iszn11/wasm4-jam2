@@ -1,6 +1,10 @@
-# wasm4-jam2
+# Strikeforce
 
-A game written in Zig for the [WASM-4](https://wasm4.org) fantasy console.
+A game written in Zig for the [WASM-4](https://wasm4.org) fantasy console. This
+is a submission for [WASM-4 Jam #2](https://itch.io/jam/wasm4-v2) hosted at
+itch.io.
+
+[Link to submission](https://itch.io/jam/wasm4-v2/rate/1672633)
 
 ## Building
 
