@@ -1,11 +1,15 @@
 const std = @import("std");
 const w4 = @import("wasm4.zig");
 
+const boss = @import("boss.zig");
 const bullets = @import("bullets.zig");
 const camera = @import("camera.zig");
 const level = @import("level.zig");
 const music = @import("music.zig");
 const player = @import("player.zig");
+const sound = @import("sound.zig");
+const turret = @import("turret.zig");
+const upgrades = @import("upgrades.zig");
 
 const Vec2 = @import("Vec2.zig");
 
@@ -21,15 +25,13 @@ export fn start() void {
 export fn update() void {
     player.update();
     bullets.update();
+    boss.update();
+    turret.update();
+    upgrades.update();
     camera.update();
 
-    if (w4.mouse.left) {
-        music.play(&music.overworld_music);
-    } else if (w4.mouse.right) {
-        music.play(&music.boss_music);
-    }
-
     music.update();
+    sound.update();
 
     w4.draw_colors.color1 = 1;
     w4.draw_colors.color2 = 1;
@@ -38,4 +40,19 @@ export fn update() void {
     level.draw();
     player.draw();
     bullets.draw();
+    boss.draw();
+    turret.draw();
+    upgrades.draw();
+
+    drawUI();
+}
+
+fn drawUI() void {
+    w4.draw_colors.color1 = 1;
+    w4.draw_colors.color2 = 1;
+    w4.rect(Vec2.zero, 160, 8);
+
+    w4.draw_colors.color1 = 2;
+    w4.draw_colors.color2 = 0;
+    w4.text("HP {}/{}", 0, 0, .{player.hp, player.max_hp});
 }

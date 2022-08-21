@@ -51,6 +51,8 @@ pub fn divf(a: Vec2, k: f32) Vec2 {
         @floatToInt(i32, @round(@intToFloat(f64, a.y) / @as(f64, k))),
     );
 }
+pub fn scale(a: Vec2, b: Vec2) Vec2 { return init(a.x * b.x, a.y * b.y); }
+pub fn unscale(a: Vec2, b: Vec2) Vec2 { return init(@divFloor(a.x, b.x), @divFloor(a.y, b.y)); }
 pub fn neg(a: Vec2) Vec2 { return init(-a.x, -a.y); }
 
 pub fn equals(a: Vec2, b: Vec2) bool { return a.x == b.x and a.y == b.y; }

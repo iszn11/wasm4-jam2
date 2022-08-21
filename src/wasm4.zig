@@ -68,12 +68,12 @@ pub const framebuffer: *[6400]u8 = @intToPtr(*[6400]u8, 0xA0);
 
 // --- DRAWING -----------------------------------------------------------------
 
-const BlitFlags = packed struct {
+pub const BlitFlags = packed struct {
     /// If not set, 1 bpp format is used, 2 bpp otherwise
     @"2bpp": bool = false,
     flip_x: bool = false,
     flip_y: bool = false,
-    /// Rotae counter-clockwise by 90 degrees
+    /// Rotate counter-clockwise by 90 degrees
     rotate: bool = false,
     _pad: u28 = 0,
 };

@@ -1,5 +1,7 @@
 const w4 = @import("wasm4.zig");
 
+const sound = @import("sound.zig");
+
 // Because of rounding to integer Hz, entire music is out of tune. After very
 // little research, the following tuning was found to result in the least amount
 // of out of tune pitches (according to equal temperament).
@@ -211,7 +213,7 @@ const MusicTrack = struct {
 pub const overworld_music = MusicTrack{
     .beat_length = 8,
     .frame_length = 16, // time signature of 16/16
-    .loop_frame = 4,
+    .loop_frame = 0,
 
     .frames = &[_][]const Note{
         &[_]Note{ p(16) },
@@ -223,6 +225,8 @@ pub const overworld_music = MusicTrack{
         &[_]Note{ v(80), r(4), p(12), n(C4, 2), n(D4, 2) },                      // 4
         &[_]Note{ v(80), r(64), n(Eb4, 16) },                                    // 5
         &[_]Note{ v(80), r(64), n(D4, 12), r(4), n(C4, 2), n(D4, 2) },           // 6
+        &[_]Note{ v(80), r(64), n(D4, 16) },                                     // 7
+        &[_]Note{ v(80), r(64), n(C4, 16) },                                     // 8
 
     },
 
@@ -231,10 +235,21 @@ pub const overworld_music = MusicTrack{
         fi(0, 0, 1, 0),
         fi(0, 0, 2, 0),
         fi(4, 0, 3, 0),
+
         fi(5, 0, 1, 0),
         fi(4, 0, 1, 0),
         fi(5, 0, 2, 0),
         fi(6, 0, 3, 0),
+
+        fi(5, 0, 1, 0),
+        fi(4, 0, 1, 0),
+        fi(5, 0, 2, 0),
+        fi(7, 0, 3, 0),
+
+        fi(8, 0, 1, 0),
+        fi(0, 0, 1, 0),
+        fi(0, 0, 2, 0),
+        fi(0, 0, 3, 0),
     },
 };
 
@@ -322,15 +337,17 @@ fn ChannelCtx(comptime channel: w4.Channel) type {
             while (self.note_timer == 0) {
                 switch (frame[self.note_ptr]) {
                     .note => |note| {
-                        const note_length = note.length * beat_length;
-                        const freq: w4.Frequency = .{.start = tuning[note.pitch]};
+                        if (!sound.channelTaken(channel)) {
+                            const note_length = note.length * beat_length;
+                            const freq: w4.Frequency = .{.start = tuning[note.pitch]};
 
-                        const sustain = note_length -| self.release;
-                        const release = note_length - sustain;
-                        const duration = w4.adsr(0, 0, sustain, release);
+                            const sustain = note_length -| self.release;
+                            const release = note_length - sustain;
+                            const duration = w4.adsr(0, 0, sustain, release);
 
-                        const flags: w4.ToneFlags = .{.channel = channel, .duty = self.duty};
-                        w4.tone(freq, duration, self.volume, flags);
+                            const flags: w4.ToneFlags = .{.channel = channel, .duty = self.duty};
+                            w4.tone(freq, duration, self.volume, flags);
+                        }
 
                         self.note_timer = note.length;
                     },

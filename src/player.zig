@@ -45,12 +45,14 @@ const State = enum {
     air,
 };
 
-const sprite_offset_sp = Vec2.init(-0x0400, -0x0900);
+pub const sprite_offset_sp = Vec2.init(-0x0400, -0x0900);
 
-const hitbox_horizontal_extent_sp = 0x0300;
-const hitbox_height_sp = 0x0900;
-const bullet_speed_sp = 0x0280;
-const bullet_spawn_offset = Vec2.init(0x0000, -0x0480);
+pub const hitbox_horizontal_extent_sp = 0x0300;
+pub const hitbox_height_sp = 0x0900;
+pub const bullet_speed_sp = 0x0280;
+pub const bullet_spawn_offset = Vec2.init(0x0000, -0x0480);
+
+pub const start_max_hp = 4;
 
 pub var position_sp = Vec2.init(0xF000, 0x1000);
 pub var speed_sp = Vec2.inits(0);
@@ -60,7 +62,10 @@ pub var platform_hspeed_sp: i32 = 0;
 pub var sprite_hflip = false;
 pub var last_jump = false;
 pub var last_shoot = false;
-pub var infinite_jump = true;
+pub var has_weapon = false;
+pub var infinite_jump = false;
+pub var max_hp: u8 = start_max_hp;
+pub var hp: u8 = start_max_hp;
 
 fn currentJumpForcesp() i32 {
     const speed_abs_x_sp = std.math.absCast(speed_sp.x);
@@ -246,7 +251,7 @@ pub fn update() void {
         },
     }
 
-    if (shoot) {
+    if (shoot and has_weapon) {
         var vel = Vec2.zero;
         if (left) vel.x -= bullet_speed_sp;
         if (right) vel.x += bullet_speed_sp;
@@ -257,7 +262,7 @@ pub fn update() void {
             vel.x = if (sprite_hflip) -bullet_speed_sp else bullet_speed_sp;
         }
 
-        bullets.spawn(position_sp.add(bullet_spawn_offset), vel);
+        bullets.spawn(position_sp.add(bullet_spawn_offset), vel, .player);
         sound.play(.shoot);
     }
 

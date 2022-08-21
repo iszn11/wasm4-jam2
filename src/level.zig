@@ -1,8 +1,10 @@
 const std = @import("std");
 const w4 = @import("wasm4.zig");
 
+const boss = @import("boss.zig");
 const camera = @import("camera.zig");
 const player = @import("player.zig");
+const turret = @import("turret.zig");
 
 const Vec2 = @import("Vec2.zig");
 
@@ -73,15 +75,12 @@ const tile_mapping: [256]u8 = blk: {
     break :blk ret;
 };
 
-pub const chunk_width_tl = 20;
-pub const chunk_height_tl = 20;
-pub const chunk_size = chunk_width_tl * chunk_height_tl;
-pub const chunk_width_px = chunk_width_tl * tile_size_px;
-pub const chunk_height_px = chunk_height_tl * tile_size_px;
-pub const chunk_width_sp = chunk_width_px * 256;
-pub const chunk_height_sp = chunk_height_px * 256;
-const chunks = [_]*const [chunk_size]u8{
-    "XX                  " ++
+pub const chunk_length = chunk_size_tl.x * chunk_size_tl.y;
+
+pub const chunk_size_tl = Vec2.init(20, 19);
+pub const chunk_size_px = chunk_size_tl.mul(tile_size_px);
+pub const chunk_size_sp = chunk_size_px.mul(256);
+const chunks = [_]*const [chunk_length]u8{
     "XX                  " ++
     "XX                  " ++
     "XX                  " ++
@@ -102,8 +101,7 @@ const chunks = [_]*const [chunk_size]u8{
     "XXXXXXXXXXXXXXXXXXXX" ++
     "XXXXXXXXXXXXXXXXXXXX"
     ,
-    "      XXXXXXXXXXXXXX" ++
-    "      XXXXXXXXXXXXXX" ++
+    "       XXXXXXXXXXXXX" ++
     "       XXXXXXXXXXXXX" ++
     "        XXXXXXXXXXXX" ++
     "         XXXXXXXXXXX" ++
@@ -136,7 +134,6 @@ const chunks = [_]*const [chunk_size]u8{
     "XXXXXXXXXXXXXXXXXXXX" ++
     "XXXXXXXXXXXXXXXXXXXX" ++
     "XXXXXXXXXXXXXXXXXXXX" ++
-    "XXXXXXXXXXXXXXXXXXXX" ++
     "                    " ++
     "                    " ++
     "                    " ++
@@ -162,10 +159,8 @@ const chunks = [_]*const [chunk_size]u8{
     "XX      XXXX      XX" ++
     "XX      XXXX      XX" ++
     "XX      XXXX      XX" ++
-    "XX      XXXX      XX" ++
     "XX      XXXX      XX"
     ,
-    "XX                XX" ++
     "XX                XX" ++
     "XX                XX" ++
     "XX                XX" ++
@@ -203,7 +198,6 @@ const chunks = [_]*const [chunk_size]u8{
     "XX                XX" ++
     "XX                XX" ++
     "XX                XX" ++
-    "XX                XX" ++
     "XXXXXXXXXXXXXXXXXXXX" ++
     "XXXXXXXXXXXXXXXXXXXX"
     ,
@@ -220,15 +214,13 @@ const chunks = [_]*const [chunk_size]u8{
     "XX      XXXX      XX" ++
     "XX      XXXX      XX" ++
     "XXXX    XXXX      XX" ++
-    "XX      XXXX      XX" ++
+    "XX      XXXX        " ++
     "XX      XXXX        " ++
     "XX    XXXXXX        " ++
     "XX      XXXX        " ++
-    "XX      XXXX        " ++
-    "XXXX    XXXXXXXXXXXX" ++
-    "XX      XXXXXXXXXXXX"
+    "XX      XXXXXXXXXXXX" ++
+    "XXXX    XXXXXXXXXXXX"
     ,
-    "XX                XX" ++
     "XX                XX" ++
     "XX                XX" ++
     "XX                XX" ++
@@ -262,7 +254,6 @@ const chunks = [_]*const [chunk_size]u8{
     "XXXXXXXXXXXXXXXXXXXX" ++
     "XXXXXXXXXXXXXXXXXXXX" ++
     "XXXXXXXXXXXXXXXXXXXX" ++
-    "XXXXXXXXXXXXXXXXXXXX" ++
     "                    " ++
     "                    " ++
     "                    " ++
@@ -274,8 +265,7 @@ const chunks = [_]*const [chunk_size]u8{
     "XX                XX" ++
     "XX                XX" ++
     "XX                XX" ++
-    "XX                XX" ++
-    "XXXXX         XX  XX" ++
+    "XXXXX             XX" ++
     "XX            XX  XX" ++
     "XX         XXXXX  XX" ++
     "XX            XX  XX" ++
@@ -308,9 +298,8 @@ const chunks = [_]*const [chunk_size]u8{
     "XX   X        X   XX" ++
     "XX                XX" ++
     "XXX     XXXX     XXX" ++
-    "XXXX            XXXX" ++
-    "XXXXXXX      XXXXXXX" ++
-    "XXXXXXXX    XXXXXXXX"
+    "XXXXX          XXXXX" ++
+    "XXXXXX        XXXXXX"
     ,
     "XXXXXXXXXXXXXXXXXXXX" ++
     "XXXXXXXXXXXXXXXXXXXX" ++
@@ -329,9 +318,8 @@ const chunks = [_]*const [chunk_size]u8{
     "XX                XX" ++
     "XX                XX" ++
     "XX                XX" ++
-    "XX                XX" ++
-    "XX                XX" ++
-    "XX       XX       XX"
+    "XX       XX       XX" ++
+    "XX                XX"
     ,
     "XXXXXXXXXXXXXXXXXXXX" ++
     "XXXXXXXXXXXXXXXXXXXX" ++
@@ -342,7 +330,6 @@ const chunks = [_]*const [chunk_size]u8{
     "XX                XX" ++
     "XXX              XXX" ++
     "XXXX            XXXX" ++
-    "XXXXXXXXXXXXXXXXXXXX" ++
     "XXXXXXXXXXXXXXXXXXXX" ++
     "XXXXXXXXXXXXXXXXXXXX" ++
     "XXXXXXXXXXXXXXXXXXXX" ++
@@ -371,19 +358,17 @@ const chunks = [_]*const [chunk_size]u8{
     "XX   X        X   XX" ++
     "XX                XX" ++
     "XXX     XXXX     XXX" ++
-    "XXXX            XXXX" ++
-    "XXXXXXX      XXXXXXX" ++
-    "XXXXXXXX    XXXXXXXX"
+    "XXXXX          XXXXX" ++
+    "XXXXXX        XXXXXX"
     ,
+    "XXXXXX        XXXXXX" ++
+    "XXXXXXX      XXXXXXX" ++
     "XXXXXXXX    XXXXXXXX" ++
-    "XXXXXXXXX  XXXXXXXXX" ++
-    "XXX              XXX" ++
-    "XX            X   XX" ++
-    "XX   X   X        XX" ++
-    "XX                XX" ++
-    "XX           X    XX" ++
+    "XX   X            XX" ++
     "XX       X        XX" ++
-    "XX  X            XXX" ++
+    "XX           X    XX" ++
+    "XX                XX" ++
+    "XX  X    X       XXX" ++
     "XX                XX" ++
     "XX   X        X   XX" ++
     "XX        X       XX" ++
@@ -396,7 +381,6 @@ const chunks = [_]*const [chunk_size]u8{
     "XXXXXXXXXXXXXXXXXXXX" ++
     "XXXXXXXXXXXXXXXXXXXX"
     ,
-    "XX                XX" ++
     "XX                XX" ++
     "XX  XX            XX" ++
     "XX                XX" ++
@@ -430,7 +414,6 @@ const chunks = [_]*const [chunk_size]u8{
     "XXXXXXXXXXXXXXXXXXXX" ++
     "XXXXXXXXXXXXXXXXXXXX" ++
     "XXXXXXXXXXXXXXXXXXXX" ++
-    "XXXXXXXXXXXXXXXXXXXX" ++
     "                    " ++
     "                    " ++
     "                    " ++
@@ -438,9 +421,8 @@ const chunks = [_]*const [chunk_size]u8{
     "XXXXXXXXXXXXXXXXXXXX" ++
     "XXXXXXXXXXXXXXXXXXXX"
     ,
-    "XXXXXXXX    XXXXXXXX" ++
-    "XXXXXXXX    XXXXXXXX" ++
-    "XXXXXXXX    XXXXXXXX" ++
+    "XXXXXX        XXXXXX" ++
+    "XXXXXXX      XXXXXXX" ++
     "XXXXXXXX    XXXXXXXX" ++
     "XXXXXXXX    XXXXXXXX" ++
     "XXXXXXXX    XXXXXXXX" ++
@@ -458,6 +440,66 @@ const chunks = [_]*const [chunk_size]u8{
     "                  XX" ++
     "XXXXXXXXXXXXXXXXXXXX" ++
     "XXXXXXXXXXXXXXXXXXXX"
+    ,
+    "XXXXXXXXXXXXXXXXXXXX" ++
+    "XXXXXXXXXXXXXXXXXXXX" ++
+    "XXXX            XXXX" ++
+    "XXX              XXX" ++
+    "XX      XXXX      XX" ++
+    "XX                XX" ++
+    "XX   X        X   XX" ++
+    "XX                XX" ++
+    "XX                XX" ++
+    "XX                XX" ++
+    "XX  X          X  XX" ++
+    "XX                XX" ++
+    "XX                XX" ++
+    "XX                XX" ++
+    "XX   X        X   XX" ++
+    "XX                XX" ++
+    "XXX     XXXX     XXX" ++
+    "XXXXXXXXXXXXXXXXXXXX" ++
+    "XXXXXXXXXXXXXXXXXXXX"
+    ,
+    "XXXXXXXXXXXXXXXXXXXX" ++
+    "XXXXXXXXXXXXXXXXXXXX" ++
+    "XXXX            XXXX" ++
+    "XXX              XXX" ++
+    "XX      XXXX      XX" ++
+    "XX                XX" ++
+    "XX   X        X   XX" ++
+    "XX                XX" ++
+    "XX                XX" ++
+    "XX                XX" ++
+    "XX  X          X  XX" ++
+    "XX                XX" ++
+    "XX                XX" ++
+    "XX                XX" ++
+    "XX   X        X   XX" ++
+    "XX                XX" ++
+    "XXX     XXXX     XXX" ++
+    "XXXXXXXXXXXXXXXXXXXX" ++
+    "XXXXXXXXXXXXXXXXXXXX"
+    ,
+    "XXXXXXXXXXXXXXXXXXXX" ++
+    "XX            XX  XX" ++
+    "XX            XX  XX" ++
+    "XX            XX  XX" ++
+    "XXXXX         XX  XX" ++
+    "XX            XX  XX" ++
+    "XX         XXXXX  XX" ++
+    "XX            XX  XX" ++
+    "XXXXX         XX  XX" ++
+    "XX            XX  XX" ++
+    "XX         XXXXX  XX" ++
+    "XX            XX  XX" ++
+    "XXXXX         XX  XX" ++
+    "              XX  XX" ++
+    "           XXXXX  XX" ++
+    "              XX  XX" ++
+    "              XX  XX" ++
+    "XXXXXXXXXXXXXXXX  XX" ++
+    "XXXXXXXXXXXXXXXX  XX"
 };
 
 const map_width = 5;
@@ -470,36 +512,43 @@ const map = [_]u8{
     0, 15, 16, 17,  18,
 };
 
-pub fn atChunk(chunk_x: i32, chunk_y: i32, local_x: i32, local_y: i32) u8 {
-    const chunk_id = map[@intCast(usize, chunk_y * map_width + chunk_x)];
+pub fn getChunkID(chunk_pos: Vec2) u8 {
+    const chunk_id = map[@intCast(usize, chunk_pos.y * map_width + chunk_pos.x)];
 
-    const chunk = chunks[chunk_id - 1];
-    const tile_char = chunk[@intCast(usize, local_y * chunk_width_tl + local_x)];
-    const tile_id = tile_mapping[tile_char];
-    return tile_id;
+    if (chunk_id == 14 and turret.state == .during_battle) {
+        return 19;
+    }
+
+    if (chunk_id == 11 and boss.state == .during_battle) {
+        return 20;
+    }
+
+    if (chunk_id == 10 and !player.has_weapon) {
+        return 21;
+    }
+
+    return chunk_id;
 }
 
 pub fn at(x: i32, y: i32) u8 {
-    const chunk_x = @divFloor(x, chunk_width_tl);
-    const chunk_y = @divFloor(y, chunk_height_tl);
+    const chunk_pos = Vec2.init(x, y).unscale(chunk_size_tl);
 
-    if (chunk_x < 0 or chunk_x >= map_width) {
+    if (chunk_pos.x < 0 or chunk_pos.x >= map_width) {
         return 1;
     }
-    if (chunk_y < 0 or chunk_y >= map_height) {
+    if (chunk_pos.y < 0 or chunk_pos.y >= map_height) {
         return 1;
     }
 
-    const chunk_id = map[@intCast(usize, chunk_y * map_width + chunk_x)];
+    const chunk_id = getChunkID(chunk_pos);
     if (chunk_id == 0 or chunk_id == 255) {
         return 1;
     }
 
-    const local_x = x - chunk_x * chunk_width_tl;
-    const local_y = y - chunk_y * chunk_height_tl;
+    const local_pos = Vec2.init(x, y).sub(chunk_pos.scale(chunk_size_tl));
 
     const chunk = chunks[chunk_id - 1];
-    const tile_char = chunk[@intCast(usize, local_y * chunk_width_tl + local_x)];
+    const tile_char = chunk[@intCast(usize, local_pos.y * chunk_size_tl.x + local_pos.x)];
     const tile_id = tile_mapping[tile_char];
     return tile_id;
 }
