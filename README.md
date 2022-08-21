@@ -6,6 +6,8 @@ itch.io.
 
 [Link to submission](https://itch.io/jam/wasm4-v2/rate/1672633)
 
+![Game screenshot](./strikeforce.png)
+
 ## Building
 
 Build and run the cart:
